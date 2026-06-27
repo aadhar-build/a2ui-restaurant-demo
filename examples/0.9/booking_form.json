@@ -5,8 +5,8 @@
       "surfaceId": "booking-form",
       "catalogId": "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",
       "theme": {
-        "primaryColor": "#FF0000",
-        "font": "Roboto"
+        "primaryColor": "#EA580C",
+        "font": "Outfit"
       }
     }
   },
