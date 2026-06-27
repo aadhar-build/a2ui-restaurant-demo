@@ -58,7 +58,7 @@ def _action_to_nl_query(body_str: str) -> str:
   except (json.JSONDecodeError, ValueError):
     return body_str
 
-  if not (payload.get('version') == 'v0.9' and 'action' in payload):
+  if not isinstance(payload, dict) or not (payload.get('version') == 'v0.9' and 'action' in payload):
     return body_str
 
   action = payload['action']
