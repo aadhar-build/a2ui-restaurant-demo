@@ -55,9 +55,12 @@ def main(host, port):
             " is not TRUE."
         )
 
-    # On Railway, RAILWAY_PUBLIC_DOMAIN is set; fall back to host:port for local dev.
-    railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
-    base_url = f"https://{railway_domain}" if railway_domain else f"http://{host}:{port}"
+    # On Railway, RAILWAY_PUBLIC_DOMAIN is set; fall back to localhost for local dev.
+    # Strip any accidental scheme prefix (e.g. "https://foo.railway.app" → "foo.railway.app")
+    # so the f-string never produces a double-scheme URL.
+    # Use "localhost" not the binding host (0.0.0.0) so browser image requests resolve.
+    railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN", "").removeprefix("https://").removeprefix("http://")
+    base_url = f"https://{railway_domain}" if railway_domain else f"http://localhost:{port}"
 
     agent = RestaurantAgent(base_url=base_url)
 

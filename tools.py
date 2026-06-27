@@ -31,29 +31,33 @@ def get_restaurants(
   logger.info(f"  - Cuisine: {cuisine}")
   logger.info(f"  - Location: {location}")
 
-  items = []
-  if "new york" in location.lower() or "ny" in location.lower():
-    try:
-      script_dir = os.path.dirname(__file__)
-      file_path = os.path.join(script_dir, "restaurant_data.json")
-      with open(file_path) as f:
-        restaurant_data_str = f.read()
-        if base_url := tool_context.state.get("base_url"):
-          restaurant_data_str = restaurant_data_str.replace(
-              "http://localhost:10002", base_url
-          )
-          logger.info(f"Updated base URL from tool context: {base_url}")
-        all_items = json.loads(restaurant_data_str)
+  if not ("new york" in location.lower() or "ny" in location.lower()):
+    logger.warning(f"  - No data for location: {location}")
+    return json.dumps({
+        "error": f"Only New York restaurant data is currently available. No results for: {location}"
+    })
 
-      # Slice the list to return only the requested number of items
-      items = all_items[:count]
-      logger.info(
-          f"  - Success: Found {len(all_items)} restaurants, returning {len(items)}."
-      )
+  try:
+    script_dir = os.path.dirname(__file__)
+    file_path = os.path.join(script_dir, "restaurant_data.json")
+    with open(file_path) as f:
+      restaurant_data_str = f.read()
+      if base_url := tool_context.state.get("base_url"):
+        restaurant_data_str = restaurant_data_str.replace(
+            "http://localhost:10002", base_url
+        )
+        logger.info(f"Updated base URL from tool context: {base_url}")
+      all_items = json.loads(restaurant_data_str)
 
-    except FileNotFoundError:
-      logger.error(f"  - Error: restaurant_data.json not found at {file_path}")
-    except json.JSONDecodeError:
-      logger.error(f"  - Error: Failed to decode JSON from {file_path}")
+    items = all_items[:count]
+    logger.info(
+        f"  - Success: Found {len(all_items)} restaurants, returning {len(items)}."
+    )
+    return json.dumps(items)
 
-  return json.dumps(items)
+  except FileNotFoundError:
+    logger.error(f"  - Error: restaurant_data.json not found at {file_path}")
+    return json.dumps({"error": "Restaurant data file not found. Server configuration error."})
+  except json.JSONDecodeError:
+    logger.error(f"  - Error: Failed to decode JSON from {file_path}")
+    return json.dumps({"error": "Restaurant data corrupted. Server configuration error."})
