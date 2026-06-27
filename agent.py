@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 import logging
 import os
@@ -50,12 +51,67 @@ from a2ui.schema.constants import (
 )
 from a2ui.schema.manager import A2uiSchemaManager
 from a2ui.parser.parser import parse_response, ResponsePart
-from a2ui.basic_catalog.provider import BasicCatalog
+from a2ui.basic_catalog.provider import BasicCatalog, BundledCatalogProvider
+from a2ui.basic_catalog.constants import BASIC_CATALOG_NAME
+from a2ui.schema.catalog import CatalogConfig, resolve_examples_path
+from a2ui.schema.catalog_provider import A2uiCatalogProvider
 from a2ui.schema.common_modifiers import remove_strict_validation
 from a2ui.a2a.extension import get_a2ui_agent_extension
 from a2ui.a2a.parts import parse_response_to_parts, stream_response_to_parts
 
 logger = logging.getLogger(__name__)
+
+
+class _SwipeStackCatalogProvider(A2uiCatalogProvider):
+  """Extends the bundled basic A2UI catalog with a custom SwipeStack component."""
+
+  def __init__(self, version: str):
+    self._base = BundledCatalogProvider(version)
+
+  def load(self) -> Dict[str, Any]:
+    schema = copy.deepcopy(self._base.load())
+
+    schema.setdefault('components', {})['SwipeStack'] = {
+        'type': 'object',
+        'description': (
+            'A Tinder-style swipe card stack for browsing restaurant options. '
+            'Users swipe right to like (triggers booking flow) or left to pass.'
+        ),
+        'properties': {
+            'component': {'const': 'SwipeStack'},
+            'id': {'type': 'string'},
+            'title': {
+                'type': 'string',
+                'description': 'Optional header text shown above the card stack.',
+            },
+            'restaurants': {
+                'type': 'array',
+                'description': 'The restaurant cards to swipe through.',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': 'string'},
+                        'name': {'type': 'string'},
+                        'imageUrl': {'type': 'string'},
+                        'description': {'type': 'string'},
+                        'rating': {'type': 'number'},
+                        'cuisine': {'type': 'string'},
+                        'address': {'type': 'string'},
+                    },
+                    'required': ['id', 'name'],
+                },
+            },
+        },
+        'required': ['restaurants'],
+    }
+
+    # Register SwipeStack in the permitted-components list so core validation passes.
+    any_comp = schema.get('$defs', {}).get('anyComponent', {})
+    one_of = any_comp.get('oneOf')
+    if isinstance(one_of, list):
+      one_of.append({'$ref': '#/components/SwipeStack'})
+
+    return schema
 
 
 class RestaurantAgent:
@@ -90,8 +146,10 @@ class RestaurantAgent:
     return A2uiSchemaManager(
         version=version,
         catalogs=[
-            BasicCatalog.get_config(
-                version=version, examples_path=f"examples/{version}"
+            CatalogConfig(
+                name=BASIC_CATALOG_NAME,
+                provider=_SwipeStackCatalogProvider(version),
+                examples_path=resolve_examples_path(f"examples/{version}"),
             )
         ],
         schema_modifiers=[remove_strict_validation],

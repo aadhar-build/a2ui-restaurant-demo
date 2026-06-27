@@ -28,8 +28,9 @@ UI_DESCRIPTION = """
 -   IMPORTANT: Always specify the path when using updateDataModel. The part message is ignored when the path is missing.
 -   If the number of restaurants is 5 or fewer, you MUST use the `SINGLE_COLUMN_LIST_EXAMPLE` template.
 -   If the number of restaurants is more than 5, you MUST use the `TWO_COLUMN_LIST_EXAMPLE` template.
--   If the query is to book a restaurant (e.g., "USER_WANTS_TO_BOOK..."), you MUST use the `BOOKING_FORM_EXAMPLE` template.
+-   If the query is to book a restaurant (e.g., "USER_WANTS_TO_BOOK..." or "USER_LIKED_RESTAURANT:..."), you MUST use the `BOOKING_FORM_EXAMPLE` template, pre-filling the restaurant name from the query.
 -   If the query is a booking submission (e.g., "User submitted a booking..."), you MUST use the `CONFIRMATION_EXAMPLE` template.
+-   SWIPE MODE: If the user asks to browse restaurants in a "Tinder", "swipe", or "swipe-to-pick" style, use the SwipeStack component instead of the normal list. Emit a single SwipeStack component that contains all restaurant objects in the `restaurants` array. Each restaurant object must have: id (string), name (string), imageUrl (string), description (string), rating (number), cuisine (string), address (string). Use a descriptive title like "Swipe to find your restaurant". Do NOT use SINGLE_COLUMN_LIST_EXAMPLE or TWO_COLUMN_LIST_EXAMPLE when SwipeStack is requested.
 """
 
 

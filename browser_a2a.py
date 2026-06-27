@@ -86,6 +86,23 @@ def _action_to_nl_query(body_str: str) -> str:
       f" URL is {image_url}"
     )
 
+  if action_name == 'swipe_decision':
+    restaurant_name = ctx.get('restaurantName', 'Unknown Restaurant')
+    decision = ctx.get('decision', 'like')
+    address = ctx.get('address', '')
+    image_url = ctx.get('imageUrl', '')
+    if decision == 'like':
+      return (
+        f"USER_LIKED_RESTAURANT: {restaurant_name}, Address: {address},"
+        f" ImageURL: {image_url}. The user swiped right on this restaurant and"
+        f" wants to book a table. Show the booking form."
+      )
+    else:
+      return (
+        f"User passed on {restaurant_name}. They swiped left. Ask if they want"
+        f" to see more restaurants or try a different search."
+      )
+
   return f"User submitted an event: {action_name} with data: {ctx}"
 
 
